@@ -20,25 +20,40 @@ class InputSummaryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(' Summary'),
-        backgroundColor: Colors.blue[900],
-        foregroundColor: Colors.white,
+        title: Text(
+          'Summary',
+          style: TextStyle(fontWeight: FontWeight.w500, fontSize: 25.0),
+        ),
+        backgroundColor: Colors.yellow[700],
+        foregroundColor: Colors.red[900],
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Plant: $plant', style: TextStyle(fontSize: 16.0)),
-            Text('Material: $material', style: TextStyle(fontSize: 16.0)),
-            Text('Material Group: $materialGroup', style: TextStyle(fontSize: 16.0)),
-            Text('Storage Location: $strLoc', style: TextStyle(fontSize: 16.0)),
+            _buildText('Plant: $plant'),
+            _buildText('Material: $material'),
+            _buildText('Material Group: $materialGroup'),
+            _buildText('Storage Location: $strLoc'),
             SizedBox(height: 16.0),
-            Text('Summary:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0)),
+            _buildText('Summary:', fontWeight: FontWeight.bold, fontSize: 18.0),
             SizedBox(height: 8.0),
             _buildPrettyJsonCard(apiData),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildText(String text, {FontWeight fontWeight = FontWeight.normal, double fontSize = 16.0}) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: Colors.blue[900],
+        fontWeight: fontWeight,
+        fontSize: fontSize,
       ),
     );
   }

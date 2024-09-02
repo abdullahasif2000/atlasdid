@@ -26,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.yellow[700],
-        title: Text(' Welcome To Atlas D.I.D',style: TextStyle( fontWeight: FontWeight.w500,fontSize:25.0, ),),
+        title: Text(' Welcome To Atlas D.I.D',style: TextStyle( fontWeight: FontWeight.w700,fontSize:28.0, ),),
         centerTitle: true,
         foregroundColor: Colors.red[900],
         shape: RoundedRectangleBorder(
@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 99.0,
               ),
             ),
-            SizedBox(height: 28.0), // logo and form space
+            SizedBox(height: 28.0),
 
             Form(
               key: _formKey,

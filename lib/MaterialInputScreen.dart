@@ -73,11 +73,11 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
               style: TextStyle(
                 fontSize: 20.0,
                 fontWeight: FontWeight.bold,
-                color: Colors.blue[900], // Set the text color to blue
+                color: Colors.blue[900],
               ),
             ),
           ),
-          SizedBox(width: 16.0),
+          SizedBox(width: 12.0),
           Expanded(
             flex: 5,
             child: TextFormField(
@@ -100,7 +100,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Material Input',style: TextStyle( fontWeight: FontWeight.w500,fontSize:25.0, ),),
+        title: Text('Atlas D.I.D',style: TextStyle( fontWeight: FontWeight.w700,fontSize:28.0, ),),
         centerTitle: true,
         backgroundColor: Colors.yellow[700],
         foregroundColor: Colors.red[900],
@@ -142,15 +142,15 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                       ),
                       child: Text('Submit'),
                     ),
-                    SizedBox(height: 30.0), // Space between button and message
+                    SizedBox(height: 30.0),
                     Text(
-                      '*Note*: Please enter at least one field to continue',
+                      '*Note: Please enter at least one field to continue',
                       style: TextStyle(
                         fontSize: 16.0,
-                        color: Colors.red[900], // Set the color of the message to red
+                        color: Colors.red[900],
                         fontWeight: FontWeight.bold,
                       ),
-                      textAlign: TextAlign.center, // Center align the text
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
