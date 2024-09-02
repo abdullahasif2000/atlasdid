@@ -18,6 +18,9 @@ class InputSummaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Extract items from API data
+    final items = apiData['Items'] as List<dynamic>? ?? [];
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -40,7 +43,11 @@ class InputSummaryScreen extends StatelessWidget {
             SizedBox(height: 16.0),
             _buildText('Summary:', fontWeight: FontWeight.bold, fontSize: 18.0),
             SizedBox(height: 8.0),
-            _buildPrettyJsonCard(apiData),
+            // Horizontal scroll view for DataTable
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: _buildDataTable(items),
+            ),
           ],
         ),
       ),
@@ -58,27 +65,29 @@ class InputSummaryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPrettyJsonCard(Map<String, dynamic> data) {
-    String prettyString = prettyJson(data);
+  Widget _buildDataTable(List<dynamic> items) {
+    // Define the columns for the DataTable
+    final columns = <String>[
+      'Desc', 'VendorName', 'Strloc', 'StrlocDesc',
+      'Unrestricted', 'AtVendor', 'VendorCode', 'Material',
+      'ReturnBlock', 'QualityInspection', 'Blocked', 'StockInTransfer'
+    ];
 
-    return Card(
-      color: Colors.grey[200],
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Text(
-            prettyString,
-            style: TextStyle(fontFamily: 'Courier', fontSize: 16.0),
-          ),
-        ),
-      ),
+    // Create the rows from the JSON data
+    final rows = items.map<DataRow>((item) {
+      final cells = columns.map<DataCell>((column) {
+        final value = item[column] ?? ''; // Use empty string if value is null
+        return DataCell(Text(value.toString()));
+      }).toList();
+      return DataRow(cells: cells);
+    }).toList();
+
+    return DataTable(
+      columnSpacing: 16.0, // Adjust spacing as needed
+      columns: columns.map<DataColumn>((column) {
+        return DataColumn(label: Text(column));
+      }).toList(),
+      rows: rows,
     );
-  }
-
-  String prettyJson(Map<String, dynamic> data) {
-    JsonEncoder encoder = JsonEncoder.withIndent('  ');
-    return encoder.convert(data);
   }
 }
