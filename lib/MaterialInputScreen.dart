@@ -133,16 +133,6 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       return DataRow(cells: cells);
     }).toList();
 
-    // Calculate totals
-    final totals = List.generate(columns.length - 1, (i) {
-      final column = columns[i + 1];
-      final count = items.fold<int>(0, (prev, item) {
-        final value = item[column];
-        return value != null && value.toString().isNotEmpty ? prev + 1 : prev;
-      });
-      return count;
-    });
-
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: SingleChildScrollView(
@@ -180,8 +170,8 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         title: Center(
           child: Image.asset(
             'assets/images/atlasdid.png',
-            width: 170.0, // Customize the width of the logo
-            height: 170.0, // Customize the height of the logo
+            width: 170.0,
+            height: 170.0,
           ),
         ),
         centerTitle: true,
@@ -198,17 +188,20 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Form(
-              key: _formKey,
-              child: Row(
-                children: <Widget>[
-                  Expanded(child: _buildDropdown()),
-                  SizedBox(width: 16.0),
-                  Expanded(child: _buildInputField()),
-                ],
+            Expanded(
+              flex: 2,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: <Widget>[
+                    _buildDropdown(),
+                    SizedBox(height: 16.0),
+                    _buildInputField(),
+                  ],
+                ),
               ),
             ),
-            SizedBox(height: 20.0),
+            SizedBox(height: 10.0),
             ElevatedButton(
               onPressed: _submit,
               style: ElevatedButton.styleFrom(
@@ -217,11 +210,12 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
               ),
               child: Text('Submit'),
             ),
-            SizedBox(height: 30.0),
+            SizedBox(height: 20.0),
             if (_isLoading)
               CircularProgressIndicator()
             else if (_apiData != null)
               Expanded(
+                flex: 3,
                 child: _buildDataTable(),
               ),
           ],
