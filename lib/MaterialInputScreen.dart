@@ -114,7 +114,6 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     final items = _apiData!['Items'] as List<dynamic>? ?? [];
     if (items.isEmpty) return Center(child: Text('No data available'));
 
-    // Define columns based on the data
     final firstItem = items.first as Map<String, dynamic>;
     final columns = ['Serial No'] + firstItem.keys.toList();
 
@@ -184,21 +183,18 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
           ),
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Expanded(
-              flex: 2,
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: <Widget>[
-                    _buildDropdown(),
-                    SizedBox(height: 16.0),
-                    _buildInputField(),
-                  ],
-                ),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: <Widget>[
+                  _buildDropdown(),
+                  SizedBox(height: 16.0),
+                  _buildInputField(),
+                ],
               ),
             ),
             SizedBox(height: 10.0),
@@ -214,8 +210,8 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
             if (_isLoading)
               CircularProgressIndicator()
             else if (_apiData != null)
-              Expanded(
-                flex: 3,
+              Container(
+                height: MediaQuery.of(context).size.height * 0.5,
                 child: _buildDataTable(),
               ),
           ],
