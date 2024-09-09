@@ -67,6 +67,7 @@ flutter:
   assets:
     - assets/images/atlasdid.png
     - assets/images/login.png
+    - assets/images/Atlas.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

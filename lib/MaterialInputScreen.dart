@@ -168,9 +168,9 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         leading: SizedBox.shrink(),
         title: Center(
           child: Image.asset(
-            'assets/images/atlasdid.png',
-            width: 170.0,
-            height: 170.0,
+            'assets/images/Atlas.png',
+            width: 100.0,
+            height: 100.0,
           ),
         ),
         centerTitle: true,
@@ -211,7 +211,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
               CircularProgressIndicator()
             else if (_apiData != null)
               Container(
-                height: MediaQuery.of(context).size.height * 0.5,
+                height: MediaQuery.of(context).size.height * 0.7,
                 child: _buildDataTable(),
               ),
           ],

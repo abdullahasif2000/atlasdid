@@ -71,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
             children: <Widget>[
               Center(
                 child: Image.asset(
-                  'assets/images/atlasdid.png',
+                  'assets/images/Atlas.png',
                   height: 80.0,
                 ),
               ),
