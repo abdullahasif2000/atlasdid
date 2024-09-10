@@ -14,6 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String _password = '';
   late ApiService apiService;
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -35,7 +36,6 @@ class _LoginScreenState extends State<LoginScreen> {
         print('Login response: $response');
 
         if (response['status'] == 200) {
-
           final accessToken = response['access_token'];
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('access_token', accessToken);
@@ -75,17 +75,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 80.0,
                 ),
               ),
-              SizedBox(height: 40.0),
+              SizedBox(height: 30.0),
+              Text(
+                'SIGN INTO YOUR ACCOUNT',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 30.0),
               Container(
-                padding: EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(20.0),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(16.0),
+                  borderRadius: BorderRadius.circular(18.0),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.blue.withOpacity(0.3),
-                      spreadRadius: 5,
-                      blurRadius: 5,
+                      spreadRadius: 8,
+                      blurRadius: 8,
                       offset: Offset(0, 3),
                     ),
                   ],
@@ -108,6 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: TextFormField(
                               decoration: InputDecoration(
                                 labelText: 'Enter Email',
+                                prefixIcon: Icon(Icons.email),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16.0),
                                 ),
@@ -126,13 +136,24 @@ class _LoginScreenState extends State<LoginScreen> {
                           Container(
                             margin: EdgeInsets.only(bottom: 16.0),
                             child: TextFormField(
+                              obscureText: _obscurePassword,
                               decoration: InputDecoration(
                                 labelText: 'Enter Password',
+                                prefixIcon: Icon(Icons.key),
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
+                                  borderRadius: BorderRadius.circular(16.0),
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
                                 ),
                               ),
-                              obscureText: true,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your password';
@@ -169,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               SizedBox(height: 40.0),
               Text(
-                '© Copyright 2023 Atlas D.I.D. All Rights Reserved',
+                '© 2024 Atlas Autos. All Rights Reserved',
                 style: TextStyle(
                   color: Colors.red[900],
                   fontSize: 12.0,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'api_service.dart'; // Ensure this imports your ApiService class
+import 'api_service.dart';
 
 class MaterialInputScreen extends StatefulWidget {
   @override
@@ -169,8 +169,8 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         title: Center(
           child: Image.asset(
             'assets/images/Atlas.png',
-            width: 100.0,
-            height: 100.0,
+            width: 90.0,
+            height: 90.0,
           ),
         ),
         centerTitle: true,
@@ -178,8 +178,8 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         foregroundColor: Colors.red[900],
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
-            bottomRight: Radius.circular(20),
-            bottomLeft: Radius.circular(20),
+            bottomRight: Radius.circular(15),
+            bottomLeft: Radius.circular(15),
           ),
         ),
       ),
