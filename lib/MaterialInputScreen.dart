@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
 class MaterialInputScreen extends StatefulWidget {
@@ -9,6 +10,7 @@ class MaterialInputScreen extends StatefulWidget {
 class _MaterialInputScreenState extends State<MaterialInputScreen> {
   final _formKey = GlobalKey<FormState>();
   String _selectedParameter = 'Plant';
+  String _company = '';
   String _inputValue = '';
   late ApiService apiService;
   Map<String, dynamic>? _apiData;
@@ -20,6 +22,14 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
   void initState() {
     super.initState();
     apiService = ApiService('http://10.7.5.52:8084/AAPLSTORE');
+    _loadCompany();
+  }
+
+  Future<void> _loadCompany() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _company = prefs.getString('company') ?? '';
+    });
   }
 
   Future<void> _submit() async {
@@ -39,6 +49,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
 
       try {
         final data = await apiService.getData(
+          company: _company,
           plant: _selectedParameter == 'Plant' ? _inputValue : '',
           mat: _selectedParameter == 'Material' ? _inputValue : '',
           matgrp: _selectedParameter == 'Material Group' ? _inputValue : '',
@@ -67,22 +78,18 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     }
   }
 
-  Widget _buildDropdown() {
+  Widget _buildDropdown(String title, List<String> items, String value, void Function(String?) onChanged) {
     return DropdownButtonFormField<String>(
-      value: _selectedParameter,
-      onChanged: (String? newValue) {
-        setState(() {
-          _selectedParameter = newValue!;
-        });
-      },
-      items: _parameters.map<DropdownMenuItem<String>>((String parameter) {
+      value: value,
+      onChanged: onChanged,
+      items: items.map<DropdownMenuItem<String>>((String item) {
         return DropdownMenuItem<String>(
-          value: parameter,
-          child: Text(parameter),
+          value: item,
+          child: Text(item),
         );
       }).toList(),
       decoration: InputDecoration(
-        labelText: 'Select Parameter',
+        labelText: title,
         border: OutlineInputBorder(),
       ),
     );
@@ -118,7 +125,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     final columns = ['Serial No'] + firstItem.keys.toList();
 
     final rows = items.asMap().entries.map<DataRow>((entry) {
-      final index = entry.key; // Serial number
+      final index = entry.key;
       final item = entry.value as Map<String, dynamic>;
 
       final cells = [index + 1].map<DataCell>((serialNumber) {
@@ -191,7 +198,16 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
               key: _formKey,
               child: Column(
                 children: <Widget>[
-                  _buildDropdown(),
+                  _buildDropdown(
+                    'Select Parameter',
+                    _parameters,
+                    _selectedParameter,
+                        (newValue) {
+                      setState(() {
+                        _selectedParameter = newValue!;
+                      });
+                    },
+                  ),
                   SizedBox(height: 16.0),
                   _buildInputField(),
                 ],
