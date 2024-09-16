@@ -190,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               SizedBox(height: 40.0),
               Text(
-                '© 2024 Atlas Autos. All Rights Reserved',
+                '© 2024 Atlas. All Rights Reserved',
                 style: TextStyle(
                   color: Colors.red[900],
                   fontSize: 12.0,
