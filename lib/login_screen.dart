@@ -4,6 +4,8 @@ import 'api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -32,20 +34,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
       try {
         final response = await apiService.login(_email, _password);
-
         print('Login response: $response');
 
         if (response['status'] == 200) {
           final accessToken = response['access_token'];
+          final companyCode = response['user']['company'];
+          // Ensure this is returned
+
+          if (companyCode == null) {
+            throw Exception('Company code is missing');
+          }
+
+          final companyName = _getCompanyName(companyCode);
+
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('access_token', accessToken);
+          await prefs.setString('company', companyName);
 
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => MaterialInputScreen()),
+            MaterialPageRoute(
+              builder: (context) => const MaterialInputScreen(),
+            ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Invalid credentials')),
+            const SnackBar(content: Text('Invalid credentials')),
           );
         }
       } catch (e) {
@@ -58,6 +71,17 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     }
+  }
+
+  String _getCompanyName(String companyCode) {
+    const companyMap = {
+      'AAPL': 'Apple',
+      'AHTL': 'AHTL Company',
+      'ADL': 'ADL Company',
+      'AGCI': 'AGCI Company',
+      'AEL': 'AEL Company',
+    };
+    return companyMap[companyCode] ?? 'Unknown Company';
   }
 
   @override
@@ -75,8 +99,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 80.0,
                 ),
               ),
-              SizedBox(height: 30.0),
-              Text(
+              const SizedBox(height: 30.0),
+              const Text(
                 'SIGN INTO YOUR ACCOUNT',
                 style: TextStyle(
                   color: Colors.black87,
@@ -84,9 +108,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              SizedBox(height: 30.0),
+              const SizedBox(height: 30.0),
               Container(
-                padding: EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(20.0),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(18.0),
@@ -95,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.blue.withOpacity(0.3),
                       spreadRadius: 8,
                       blurRadius: 8,
-                      offset: Offset(0, 3),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -107,17 +131,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 60.0,
                       ),
                     ),
-                    SizedBox(height: 20.0),
+                    const SizedBox(height: 20.0),
                     Form(
                       key: _formKey,
                       child: Column(
                         children: <Widget>[
                           Container(
-                            margin: EdgeInsets.only(bottom: 16.0),
+                            margin: const EdgeInsets.only(bottom: 16.0),
                             child: TextFormField(
                               decoration: InputDecoration(
                                 labelText: 'Enter Email',
-                                prefixIcon: Icon(Icons.email),
+                                prefixIcon: const Icon(Icons.email),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16.0),
                                 ),
@@ -134,12 +158,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           Container(
-                            margin: EdgeInsets.only(bottom: 16.0),
+                            margin: const EdgeInsets.only(bottom: 16.0),
                             child: TextFormField(
                               obscureText: _obscurePassword,
                               decoration: InputDecoration(
                                 labelText: 'Enter Password',
-                                prefixIcon: Icon(Icons.key),
+                                prefixIcon: const Icon(Icons.key),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16.0),
                                 ),
@@ -170,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: ElevatedButton.styleFrom(
                               foregroundColor: Colors.white,
                               backgroundColor: Colors.yellow[700],
-                              padding: EdgeInsets.symmetric(
+                              padding: const EdgeInsets.symmetric(
                                 horizontal: 25.0,
                                 vertical: 12.0,
                               ),
@@ -179,8 +203,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             child: _isLoading
-                                ? CircularProgressIndicator()
-                                : Text('Login'),
+                                ? const CircularProgressIndicator()
+                                : const Text('Login'),
                           ),
                         ],
                       ),
@@ -188,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 40.0),
+              const SizedBox(height: 40.0),
               Text(
                 '© 2024 Atlas. All Rights Reserved',
                 style: TextStyle(

@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
 class MaterialInputScreen extends StatefulWidget {
+  const MaterialInputScreen({super.key});
+
   @override
   _MaterialInputScreenState createState() => _MaterialInputScreenState();
 }
@@ -28,7 +30,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
   Future<void> _loadCompany() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _company = prefs.getString('company') ?? '';
+      _company = prefs.getString('company') ?? 'Unknown Company';
     });
   }
 
@@ -38,7 +40,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
 
       if (_inputValue.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please enter a value')),
+          const SnackBar(content: Text('Please enter a value')),
         );
         return;
       }
@@ -56,9 +58,9 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
           strloc: _selectedParameter == 'Str Loc' ? _inputValue : '',
         );
 
-        if (data == null || (data['Items'] as List<dynamic>?)?.isEmpty == true) {
+        if ((data['Items'] as List<dynamic>?)?.isEmpty == true) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('No results found')),
+            const SnackBar(content: Text('No results found')),
           );
         } else {
           setState(() {
@@ -68,7 +70,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       } catch (e) {
         print('Error: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to fetch data from server')),
+          const SnackBar(content: Text('Failed to fetch data from server')),
         );
       } finally {
         setState(() {
@@ -78,8 +80,12 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     }
   }
 
-  Widget _buildDropdown(String title, List<String> items, String value, void Function(String?) onChanged) {
+  Widget _buildDropdown(String title, List<String> items, String value, void Function(String?)? onChanged) {
     return DropdownButtonFormField<String>(
+      decoration: InputDecoration(
+        labelText: title,
+        border: OutlineInputBorder(),
+      ),
       value: value,
       onChanged: onChanged,
       items: items.map<DropdownMenuItem<String>>((String item) {
@@ -88,16 +94,12 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
           child: Text(item),
         );
       }).toList(),
-      decoration: InputDecoration(
-        labelText: title,
-        border: OutlineInputBorder(),
-      ),
     );
   }
 
   Widget _buildInputField() {
     return TextFormField(
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         labelText: 'Enter Value',
         border: OutlineInputBorder(),
       ),
@@ -115,11 +117,11 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
 
   Widget _buildDataTable() {
     if (_apiData == null || _apiData!['Items'] == null) {
-      return Center(child: Text('No data available'));
+      return const Center(child: Text('No data available'));
     }
 
     final items = _apiData!['Items'] as List<dynamic>? ?? [];
-    if (items.isEmpty) return Center(child: Text('No data available'));
+    if (items.isEmpty) return const Center(child: Text('No data available'));
 
     final firstItem = items.first as Map<String, dynamic>;
     final columns = ['Serial No'] + firstItem.keys.toList();
@@ -172,7 +174,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: SizedBox.shrink(),
+        leading: const SizedBox.shrink(),
         title: Center(
           child: Image.asset(
             'assets/images/Atlas.png',
@@ -183,7 +185,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         centerTitle: true,
         backgroundColor: Colors.yellow[700],
         foregroundColor: Colors.red[900],
-        shape: RoundedRectangleBorder(
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
             bottomRight: Radius.circular(15),
             bottomLeft: Radius.circular(15),
@@ -194,6 +196,15 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            Text(
+              'Welcome to $_company',
+              style: TextStyle(
+                fontSize: 20.0,
+                fontWeight: FontWeight.bold,
+                color: Colors.red[900],
+              ),
+            ),
+            const SizedBox(height: 20.0),
             Form(
               key: _formKey,
               child: Column(
@@ -208,23 +219,23 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                       });
                     },
                   ),
-                  SizedBox(height: 16.0),
+                  const SizedBox(height: 16.0),
                   _buildInputField(),
                 ],
               ),
             ),
-            SizedBox(height: 10.0),
+            const SizedBox(height: 10.0),
             ElevatedButton(
               onPressed: _submit,
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white,
                 backgroundColor: Colors.blue[900],
               ),
-              child: Text('Submit'),
+              child: const Text('Submit'),
             ),
-            SizedBox(height: 20.0),
+            const SizedBox(height: 20.0),
             if (_isLoading)
-              CircularProgressIndicator()
+              const CircularProgressIndicator()
             else if (_apiData != null)
               Container(
                 height: MediaQuery.of(context).size.height * 0.7,
