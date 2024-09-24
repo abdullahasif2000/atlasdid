@@ -26,13 +26,10 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/adl_logo.png
+
     - assets/images/login.png
     - assets/images/Atlas.png
-    - assets/images/aapl_logo.png
-    - assets/images/ahtl_logo.png
-    - assets/images/ael_logo.png
-    - assets/images/default_logo.jpg
+
 
 flutter_icons:
   android: true

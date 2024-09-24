@@ -84,7 +84,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
         labelText: title,
-        border: OutlineInputBorder(),
+        border: const OutlineInputBorder(),
       ),
       value: value,
       onChanged: onChanged,
@@ -124,18 +124,31 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     if (items.isEmpty) return const Center(child: Text('No data available'));
 
     final firstItem = items.first as Map<String, dynamic>;
-    final columns = ['Serial No'] + firstItem.keys.toList();
+    final columns = ['S NO.'] + firstItem.keys.toList();
 
     final rows = items.asMap().entries.map<DataRow>((entry) {
       final index = entry.key;
       final item = entry.value as Map<String, dynamic>;
 
       final cells = [index + 1].map<DataCell>((serialNumber) {
-        return DataCell(Text(serialNumber.toString()));
+        return DataCell(
+          Center(
+            child: Text(serialNumber.toString(), textAlign: TextAlign.center),
+          ),
+        );
       }).toList()
           + columns.sublist(1).map<DataCell>((column) {
             final value = item[column];
-            return DataCell(Text(value?.toString() ?? 'NA'));
+            final displayValue = (value == null || value.toString().isEmpty) ? 'NA' : value.toString();
+            return DataCell(
+              Center(
+                child: Text(
+                  displayValue,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.visible,
+                ),
+              ),
+            );
           }).toList();
 
       return DataRow(cells: cells);
@@ -154,11 +167,16 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
             columnSpacing: 16.0,
             columns: columns.map<DataColumn>((column) {
               return DataColumn(
-                label: Text(
-                  column,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red[900],
+                label: Expanded(
+                  child: Center(
+                    child: Text(
+                      column,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.yellow[800],
+                      ),
+                    ),
                   ),
                 ),
               );
@@ -174,12 +192,11 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: const SizedBox.shrink(),
-        title: Center(
-          child: Image.asset(
-            'assets/images/Atlas.png',
-            width: 90.0,
-            height: 90.0,
+        title: Text(
+          'Welcome to $_company',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.red[900],
           ),
         ),
         centerTitle: true,
@@ -196,14 +213,6 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text(
-              'Welcome to $_company',
-              style: TextStyle(
-                fontSize: 20.0,
-                fontWeight: FontWeight.bold,
-                color: Colors.red[900],
-              ),
-            ),
             const SizedBox(height: 20.0),
             Form(
               key: _formKey,
@@ -237,7 +246,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
             if (_isLoading)
               const CircularProgressIndicator()
             else if (_apiData != null)
-              Container(
+              SizedBox(
                 height: MediaQuery.of(context).size.height * 0.7,
                 child: _buildDataTable(),
               ),

@@ -75,11 +75,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String _getCompanyName(String companyCode) {
     const companyMap = {
-      'AAPL': 'Apple',
-      'AHTL': 'AHTL Company',
-      'ADL': 'ADL Company',
-      'AGCI': 'AGCI Company',
-      'AEL': 'AEL Company',
+      'AAPL': 'Atlas Autos  ',
+      'AHTL': 'Atlas Hitec ',
+      'ADL': 'Atlas D.I.D ',
+      'AGCI': 'AGCI ',
+      'AEL': 'Atlas Engineering ',
     };
     return companyMap[companyCode] ?? 'Unknown Company';
   }
