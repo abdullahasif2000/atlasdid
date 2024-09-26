@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (response['status'] == 200) {
           final accessToken = response['access_token'];
           final companyCode = response['user']['company'];
-          // Ensure this is returned
+
 
           if (companyCode == null) {
             throw Exception('Company code is missing');
@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
       'AAPL': 'Atlas Autos  ',
       'AHTL': 'Atlas Hitec ',
       'ADL': 'Atlas D.I.D ',
-      'AGCI': 'AGCI ',
+      'AGCI': 'Atlas GCI ',
       'AEL': 'Atlas Engineering ',
     };
     return companyMap[companyCode] ?? 'Unknown Company';

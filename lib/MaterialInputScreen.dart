@@ -87,7 +87,12 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         border: const OutlineInputBorder(),
       ),
       value: value,
-      onChanged: onChanged,
+      onChanged: (newValue) {
+        setState(() {
+          _selectedParameter = newValue!;
+          _apiData = null; // Reset the API data when parameter changes
+        });
+      },
       items: items.map<DropdownMenuItem<String>>((String item) {
         return DropdownMenuItem<String>(
           value: item,
@@ -123,70 +128,181 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     final items = _apiData!['Items'] as List<dynamic>? ?? [];
     if (items.isEmpty) return const Center(child: Text('No data available'));
 
-    final firstItem = items.first as Map<String, dynamic>;
-    final columns = ['S NO.'] + firstItem.keys.toList();
+    // Change to column layout if parameter is 'Material'
+    if (_selectedParameter == 'Material') {
+      return _buildColumnLayout(items);
+    }
+
+    final columns = [
+      'S NO.', 'Material', 'Desc', 'Plant', 'Strloc', 'StrlocDesc',
+      'Unrestricted', 'QualityInspection', 'Blocked', 'ReturnBlock',
+      'VendorCode', 'VendorName', 'AtVendor', 'StockInTransfer'
+    ];
 
     final rows = items.asMap().entries.map<DataRow>((entry) {
       final index = entry.key;
       final item = entry.value as Map<String, dynamic>;
 
-      final cells = [index + 1].map<DataCell>((serialNumber) {
-        return DataCell(
-          Center(
-            child: Text(serialNumber.toString(), textAlign: TextAlign.center),
-          ),
-        );
-      }).toList()
-          + columns.sublist(1).map<DataCell>((column) {
-            final value = item[column];
-            final displayValue = (value == null || value.toString().isEmpty) ? 'NA' : value.toString();
-            return DataCell(
-              Center(
-                child: Text(
-                  displayValue,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.visible,
-                ),
-              ),
-            );
-          }).toList();
+      final cells = [
+        DataCell(Center(child: Text((index + 1).toString()))),
+        DataCell(Center(child: Text(item['Material']?.toString().isNotEmpty == true ? item['Material']! : 'NA'))),
+        DataCell(Center(child: Text(item['Desc']?.toString().isNotEmpty == true ? item['Desc']! : 'NA'))),
+        DataCell(Center(child: Text(item['Plant']?.toString().isNotEmpty == true ? item['Plant']! : 'NA'))),
+        DataCell(Center(child: Text(item['Strloc']?.toString().isNotEmpty == true ? item['Strloc']! : 'NA'))),
+        DataCell(Center(child: Text(item['StrlocDesc']?.toString().isNotEmpty == true ? item['StrlocDesc']! : 'NA'))),
+        DataCell(Center(child: Text(item['Unrestricted']?.toString().isNotEmpty == true ? item['Unrestricted']! : 'NA'))),
+        DataCell(Center(child: Text(item['QualityInspection']?.toString().isNotEmpty == true ? item['QualityInspection']! : 'NA'))),
+        DataCell(Center(child: Text(item['Blocked']?.toString().isNotEmpty == true ? item['Blocked']! : 'NA'))),
+        DataCell(Center(child: Text(item['ReturnBlock']?.toString().isNotEmpty == true ? item['ReturnBlock']! : 'NA'))),
+        DataCell(Center(child: Text(item['VendorCode']?.toString().isNotEmpty == true ? item['VendorCode']! : 'NA'))),
+        DataCell(Center(child: Text(item['VendorName']?.toString().isNotEmpty == true ? item['VendorName']! : 'NA'))),
+        DataCell(Center(child: Text(item['AtVendor']?.toString().isNotEmpty == true ? item['AtVendor']! : 'NA'))),
+        DataCell(Center(child: Text(item['StockInTransfer']?.toString().isNotEmpty == true ? item['StockInTransfer']! : 'NA'))),
+      ];
 
       return DataRow(cells: cells);
     }).toList();
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.vertical,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(width: 2.0, color: Colors.blue[900]!),
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: DataTable(
-            columnSpacing: 16.0,
-            columns: columns.map<DataColumn>((column) {
-              return DataColumn(
-                label: Expanded(
-                  child: Center(
-                    child: Text(
-                      column,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.yellow[800],
+    return Expanded(
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.blue, width: 1.0),
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SingleChildScrollView( // This enables vertical scrolling
+            child: DataTable(
+              columnSpacing: 16.0,
+              columns: columns.map<DataColumn>((column) {
+                return DataColumn(
+                  label: Expanded(
+                    child: Center(
+                      child: Text(
+                        column,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.yellow,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
-            rows: rows,
+                );
+              }).toList(),
+              rows: rows,
+            ),
           ),
         ),
       ),
     );
   }
+
+  Widget _buildColumnLayout(List<dynamic> items) {
+    return Expanded(
+      child: ListView.builder(
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = items[index] as Map<String, dynamic>;
+
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.blue, width: 1.0),
+              borderRadius: BorderRadius.circular(12.0),
+              color: Colors.yellow[700],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Text('Material: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Expanded(child: Text('${item['Material']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Text('Description: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Expanded(child: Text('${item['Desc']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Text('Plant: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Expanded(child: Text('${item['Plant']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Text('Strloc: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Expanded(child: Text('${item['Strloc']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Text('StrlocDesc: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Expanded(child: Text('${item['StrlocDesc']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Text('Unrestricted: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Expanded(child: Text('${item['Unrestricted']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Text('Quality Inspection: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Expanded(child: Text('${item['QualityInspection']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Text('Blocked: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Expanded(child: Text('${item['Blocked']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Text('Return Block: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Expanded(child: Text('${item['ReturnBlock']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Text('Vendor Code: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Expanded(child: Text('${item['VendorCode']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Text('Vendor Name: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Expanded(child: Text('${item['VendorName']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Text('At Vendor: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Expanded(child: Text('${item['AtVendor']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Text('Stock In Transfer: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Expanded(child: Text('${item['StockInTransfer']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -209,13 +325,13 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 20.0),
-            Form(
-              key: _formKey,
+      body: Column(
+        children: [
+          const SizedBox(height: 20.0),
+          Form(
+            key: _formKey,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: <Widget>[
                   _buildDropdown(
@@ -225,33 +341,34 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                         (newValue) {
                       setState(() {
                         _selectedParameter = newValue!;
+                        _apiData = null;
                       });
                     },
                   ),
                   const SizedBox(height: 16.0),
                   _buildInputField(),
+                  const SizedBox(height: 10.0),
+                  ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[700],
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('Submit'),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 10.0),
-            ElevatedButton(
-              onPressed: _submit,
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.blue[900],
-              ),
-              child: const Text('Submit'),
-            ),
-            const SizedBox(height: 20.0),
-            if (_isLoading)
-              const CircularProgressIndicator()
-            else if (_apiData != null)
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.7,
-                child: _buildDataTable(),
-              ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16.0),
+          if (_isLoading)
+            const CircularProgressIndicator()
+          else
+            _buildDataTable(),
+        ],
       ),
     );
   }
