@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
@@ -36,6 +37,9 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
 
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
+
+      FocusScope.of(context).unfocus();
+
       _formKey.currentState!.save();
 
       if (_inputValue.isEmpty) {
@@ -68,7 +72,9 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
           });
         }
       } catch (e) {
-        print('Error: $e');
+        if (kDebugMode) {
+          print('Error: $e');
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to fetch data from server')),
         );
@@ -80,6 +86,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     }
   }
 
+
   Widget _buildDropdown(String title, List<String> items, String value, void Function(String?)? onChanged) {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
@@ -90,7 +97,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       onChanged: (newValue) {
         setState(() {
           _selectedParameter = newValue!;
-          _apiData = null; // Reset the API data when parameter changes
+          _apiData = null;
         });
       },
       items: items.map<DropdownMenuItem<String>>((String item) {
@@ -145,7 +152,11 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
 
       final cells = [
         DataCell(Center(child: Text((index + 1).toString()))),
-        DataCell(Center(child: Text(item['Material']?.toString().isNotEmpty == true ? item['Material']! : 'NA'))),
+        DataCell(Center(child: Text(
+            int.tryParse(item['Material'] ?? '0')?.toString() ?? 'N/A'
+        )
+        )
+        ),
         DataCell(Center(child: Text(item['Desc']?.toString().isNotEmpty == true ? item['Desc']! : 'NA'))),
         DataCell(Center(child: Text(item['Plant']?.toString().isNotEmpty == true ? item['Plant']! : 'NA'))),
         DataCell(Center(child: Text(item['Strloc']?.toString().isNotEmpty == true ? item['Strloc']! : 'NA'))),
@@ -171,12 +182,13 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         ),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: SingleChildScrollView( // This enables vertical scrolling
+          child: SingleChildScrollView(
             child: DataTable(
               columnSpacing: 16.0,
               columns: columns.map<DataColumn>((column) {
                 return DataColumn(
-                  label: Expanded(
+                  label: SizedBox(
+                    width: 100,
                     child: Center(
                       child: Text(
                         column,
@@ -185,6 +197,8 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                           fontWeight: FontWeight.bold,
                           color: Colors.yellow,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
                       ),
                     ),
                   ),
@@ -213,88 +227,62 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
               borderRadius: BorderRadius.circular(12.0),
               color: Colors.yellow[700],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Text('Material: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                    Expanded(child: Text('${item['Material']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('Description: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                    Expanded(child: Text('${item['Desc']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('Plant: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                    Expanded(child: Text('${item['Plant']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('Strloc: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                    Expanded(child: Text('${item['Strloc']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('StrlocDesc: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                    Expanded(child: Text('${item['StrlocDesc']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('Unrestricted: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                    Expanded(child: Text('${item['Unrestricted']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('Quality Inspection: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                    Expanded(child: Text('${item['QualityInspection']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('Blocked: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                    Expanded(child: Text('${item['Blocked']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('Return Block: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                    Expanded(child: Text('${item['ReturnBlock']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('Vendor Code: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                    Expanded(child: Text('${item['VendorCode']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('Vendor Name: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                    Expanded(child: Text('${item['VendorName']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('At Vendor: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                    Expanded(child: Text('${item['AtVendor']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('Stock In Transfer: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                    Expanded(child: Text('${item['StockInTransfer']?.toString() ?? 'NA'}', style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-              ],
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Left side: Headers
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text('Material:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Description:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Plant:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Storage Location:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Storage Location Desc:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Unrestricted:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Quality Inspection:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Blocked:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Return Block:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Vendor Code:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Vendor Name:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('At Vendor:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Stock in Transfer:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                      ],
+                    ),
+                  ),
+                  // Middle: Vertical divider
+                  Container(
+                    width: 1.0,
+                    color: Colors.black,
+                    margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                  ),
+                  // Right side: Values
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildDataCell(item['Material']),
+                        _buildDataCell(item['Desc']),
+                        _buildDataCell(item['Plant']),
+                        _buildDataCell(item['Strloc']),
+                        _buildDataCell(item['StrlocDesc']),
+                        _buildDataCell(item['Unrestricted']),
+                        _buildDataCell(item['QualityInspection']),
+                        _buildDataCell(item['Blocked']),
+                        _buildDataCell(item['ReturnBlock']),
+                        _buildDataCell(item['VendorCode']),
+                        _buildDataCell(item['VendorName']),
+                        _buildDataCell(item['AtVendor']),
+                        _buildDataCell(item['StockInTransfer']),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -302,9 +290,50 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     );
   }
 
+  Widget _buildDataCell(dynamic value) {
+    return GestureDetector(
+      onTap: () {
+        if (value != null && value.toString().isNotEmpty) {
+          _showFullTextDialog(value.toString());
+        }
+      },
+      child: Tooltip(
+        message: value?.toString() ?? 'NA',
+        child: Text(
+          value?.toString().isNotEmpty == true ? value.toString() : 'N/A',
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+          style: TextStyle(color: Colors.black),
+        ),
+      ),
+    );
+  }
+
+  void _showFullTextDialog(String fullText) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          // title: Text('Full Text'),
+          content: Text(fullText),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
 
 
   @override
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

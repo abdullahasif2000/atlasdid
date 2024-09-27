@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'MaterialInputScreen.dart';
 import 'api_service.dart';
@@ -14,9 +15,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   String _email = '';
   String _password = '';
+  String _selectedCompany = 'AAPL';
   late ApiService apiService;
   bool _isLoading = false;
   bool _obscurePassword = true;
+
+  final List<String> _companyCodes = ['AAPL', 'AHTL', 'ADL', 'AGCI', 'AEL'];
 
   @override
   void initState() {
@@ -34,22 +38,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
       try {
         final response = await apiService.login(_email, _password);
-        print('Login response: $response');
+        if (kDebugMode) {
+          print('Login response: $response');
+        }
 
         if (response['status'] == 200) {
           final accessToken = response['access_token'];
-          final companyCode = response['user']['company'];
 
-
-          if (companyCode == null) {
-            throw Exception('Company code is missing');
-          }
-
-          final companyName = _getCompanyName(companyCode);
 
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('access_token', accessToken);
-          await prefs.setString('company', companyName);
+          await prefs.setString('company', _selectedCompany);
 
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
@@ -71,17 +70,6 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     }
-  }
-
-  String _getCompanyName(String companyCode) {
-    const companyMap = {
-      'AAPL': 'Atlas Autos  ',
-      'AHTL': 'Atlas Hitec ',
-      'ADL': 'Atlas D.I.D ',
-      'AGCI': 'Atlas GCI ',
-      'AEL': 'Atlas Engineering ',
-    };
-    return companyMap[companyCode] ?? 'Unknown Company';
   }
 
   @override
@@ -136,6 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       key: _formKey,
                       child: Column(
                         children: <Widget>[
+                          // Email field
                           Container(
                             margin: const EdgeInsets.only(bottom: 16.0),
                             child: TextFormField(
@@ -157,6 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                             ),
                           ),
+                          // Password field
                           Container(
                             margin: const EdgeInsets.only(bottom: 16.0),
                             child: TextFormField(
@@ -189,6 +179,32 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                             ),
                           ),
+                          // Company dropdown
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 16.0),
+                            child: DropdownButtonFormField<String>(
+                              decoration: InputDecoration(
+                                labelText: 'Select Company',
+                                prefixIcon: const Icon(Icons.business),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16.0),
+                                ),
+                              ),
+                              value: _selectedCompany,
+                              onChanged: (newValue) {
+                                setState(() {
+                                  _selectedCompany = newValue!;
+                                });
+                              },
+                              items: _companyCodes.map((company) {
+                                return DropdownMenuItem<String>(
+                                  value: company,
+                                  child: Text(company),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          // Login button
                           ElevatedButton(
                             onPressed: _login,
                             style: ElevatedButton.styleFrom(
