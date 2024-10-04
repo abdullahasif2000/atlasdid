@@ -13,7 +13,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  String _email = '';
+  String _username = ''; // Changed from email to username
   String _password = '';
   String _selectedCompany = 'AAPL';
   late ApiService apiService;
@@ -37,24 +37,31 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       try {
-        final response = await apiService.login(_email, _password);
+        final response = await apiService.login(_username, _password);
         if (kDebugMode) {
           print('Login response: $response');
         }
 
         if (response['status'] == 200) {
           final accessToken = response['access_token'];
+          final company = response['user']['company'];
 
 
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('access_token', accessToken);
-          await prefs.setString('company', _selectedCompany);
+          if (company == _selectedCompany) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('access_token', accessToken);
+            await prefs.setString('company', _selectedCompany);
 
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const MaterialInputScreen(),
-            ),
-          );
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const MaterialInputScreen(),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Selected company does not match.')),
+            );
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Invalid credentials')),
@@ -124,25 +131,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       key: _formKey,
                       child: Column(
                         children: <Widget>[
-                          // Email field
+                          // Username field
                           Container(
                             margin: const EdgeInsets.only(bottom: 16.0),
                             child: TextFormField(
                               decoration: InputDecoration(
-                                labelText: 'Enter Email',
-                                prefixIcon: const Icon(Icons.email),
+                                labelText: 'Enter Username', // Changed label
+                                prefixIcon: const Icon(Icons.person), // Changed icon
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16.0),
                                 ),
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
+                                  return 'Please enter your username';
                                 }
                                 return null;
                               },
                               onSaved: (value) {
-                                _email = value!;
+                                _username = value!;
                               },
                             ),
                           ),

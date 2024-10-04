@@ -8,11 +8,11 @@ class ApiService {
 
   ApiService(this.baseUrl, {this.defaultTimeout = const Duration(seconds: 20)});
 
-  Future<Map<String, dynamic>> login(String email, String password, {Duration? timeout}) async {
+  Future<Map<String, dynamic>> login(String username, String password, {Duration? timeout}) async {
     final uri = Uri.parse('$baseUrl/api/login');
 
     final body = json.encode({
-      'email': email,
+      'username': username, // Use username instead of email
       'password': password,
     });
 
