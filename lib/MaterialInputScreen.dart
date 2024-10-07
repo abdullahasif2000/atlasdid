@@ -135,10 +135,10 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     final items = _apiData!['Items'] as List<dynamic>? ?? [];
     if (items.isEmpty) return const Center(child: Text('No data available'));
 
-    // Change to column layout if parameter is 'Material'
     if (_selectedParameter == 'Material') {
       return _buildColumnLayout(items);
     }
+
 
     final columns = [
       'S NO.', 'Material', 'Desc', 'Plant', 'Strloc', 'StrlocDesc',
@@ -150,25 +150,25 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       final index = entry.key;
       final item = entry.value as Map<String, dynamic>;
 
+      String getCellValue(String key) {
+        return item[key]?.toString().isNotEmpty == true ? item[key]! : 'NA';
+      }
+
       final cells = [
         DataCell(Center(child: Text((index + 1).toString()))),
-        DataCell(Center(child: Text(
-            int.tryParse(item['Material'] ?? '0')?.toString() ?? 'N/A'
-        )
-        )
-        ),
-        DataCell(Center(child: Text(item['Desc']?.toString().isNotEmpty == true ? item['Desc']! : 'NA'))),
-        DataCell(Center(child: Text(item['Plant']?.toString().isNotEmpty == true ? item['Plant']! : 'NA'))),
-        DataCell(Center(child: Text(item['Strloc']?.toString().isNotEmpty == true ? item['Strloc']! : 'NA'))),
-        DataCell(Center(child: Text(item['StrlocDesc']?.toString().isNotEmpty == true ? item['StrlocDesc']! : 'NA'))),
-        DataCell(Center(child: Text(item['Unrestricted']?.toString().isNotEmpty == true ? item['Unrestricted']! : 'NA'))),
-        DataCell(Center(child: Text(item['QualityInspection']?.toString().isNotEmpty == true ? item['QualityInspection']! : 'NA'))),
-        DataCell(Center(child: Text(item['Blocked']?.toString().isNotEmpty == true ? item['Blocked']! : 'NA'))),
-        DataCell(Center(child: Text(item['ReturnBlock']?.toString().isNotEmpty == true ? item['ReturnBlock']! : 'NA'))),
-        DataCell(Center(child: Text(item['VendorCode']?.toString().isNotEmpty == true ? item['VendorCode']! : 'NA'))),
-        DataCell(Center(child: Text(item['VendorName']?.toString().isNotEmpty == true ? item['VendorName']! : 'NA'))),
-        DataCell(Center(child: Text(item['AtVendor']?.toString().isNotEmpty == true ? item['AtVendor']! : 'NA'))),
-        DataCell(Center(child: Text(item['StockInTransfer']?.toString().isNotEmpty == true ? item['StockInTransfer']! : 'NA'))),
+        DataCell(Center(child: Text(getCellValue('Material')))),
+        DataCell(Center(child: Text(getCellValue('Desc')))),
+        DataCell(Center(child: Text(getCellValue('Plant')))),
+        DataCell(Center(child: Text(getCellValue('Strloc')))),
+        DataCell(Center(child: Text(getCellValue('StrlocDesc')))),
+        DataCell(Center(child: Text(getCellValue('Unrestricted')))),
+        DataCell(Center(child: Text(getCellValue('QualityInspection')))),
+        DataCell(Center(child: Text(getCellValue('Blocked')))),
+        DataCell(Center(child: Text(getCellValue('ReturnBlock')))),
+        DataCell(Center(child: Text(getCellValue('VendorCode')))),
+        DataCell(Center(child: Text(getCellValue('VendorName')))),
+        DataCell(Center(child: Text(getCellValue('AtVendor')))),
+        DataCell(Center(child: Text(getCellValue('StockInTransfer')))),
       ];
 
       return DataRow(cells: cells);
@@ -187,15 +187,15 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
               columnSpacing: 16.0,
               columns: columns.map<DataColumn>((column) {
                 return DataColumn(
-                  label: SizedBox(
-                    width: 100,
-                    child: Center(
+                  label: Center(
+                    child: Container(
+                      width: 120,
                       child: Text(
                         column,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Colors.yellow,
+                          color: Colors.yellow[700],
                         ),
                         overflow: TextOverflow.ellipsis,
                         softWrap: false,
@@ -211,6 +211,10 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       ),
     );
   }
+
+
+
+
 
   Widget _buildColumnLayout(List<dynamic> items) {
     return Expanded(
