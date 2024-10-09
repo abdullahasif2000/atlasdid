@@ -151,13 +151,13 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       final item = entry.value as Map<String, dynamic>;
 
       String getCellValue(String key) {
-        return item[key]?.toString().isNotEmpty == true ? item[key]! : 'NA';
+        return item[key]?.toString().isNotEmpty == true ? item[key]! : 'N/A';
       }
 
       final cells = [
         DataCell(Center(child: Text((index + 1).toString()))),
-        DataCell(Center(child: Text(getCellValue('Material')))),
-        DataCell(Center(child: Text(getCellValue('Desc')))),
+        DataCell(Text(getCellValue('Material'))),
+        DataCell(Text(getCellValue('Desc'))),
         DataCell(Center(child: Text(getCellValue('Plant')))),
         DataCell(Center(child: Text(getCellValue('Strloc')))),
         DataCell(Center(child: Text(getCellValue('StrlocDesc')))),
@@ -175,46 +175,35 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     }).toList();
 
     return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.blue, width: 1.0),
-          borderRadius: BorderRadius.circular(12.0),
-        ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
         child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SingleChildScrollView(
-            child: DataTable(
-              columnSpacing: 16.0,
-              columns: columns.map<DataColumn>((column) {
-                return DataColumn(
-                  label: Center(
-                    child: Container(
-                      width: 120,
-                      child: Text(
-                        column,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.yellow[700],
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        softWrap: false,
+          child: DataTable(
+            columnSpacing: 20.0,
+            headingRowColor: WidgetStateProperty.all(Colors.blue[900]),
+            columns: columns.map<DataColumn>((column) {
+              return DataColumn(
+                label: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      column,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                );
-              }).toList(),
-              rows: rows,
-            ),
+                ),
+              );
+            }).toList(),
+            rows: rows,
           ),
         ),
       ),
     );
   }
-
-
-
-
 
   Widget _buildColumnLayout(List<dynamic> items) {
     return Expanded(
@@ -384,7 +373,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                   ElevatedButton(
                     onPressed: _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[700],
+                      backgroundColor: Colors.blue[900],
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
