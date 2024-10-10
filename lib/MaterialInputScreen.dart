@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
+import 'login_screen.dart';
 
 class MaterialInputScreen extends StatefulWidget {
   const MaterialInputScreen({super.key});
@@ -37,7 +38,6 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
 
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
-
       FocusScope.of(context).unfocus();
 
       _formKey.currentState!.save();
@@ -86,6 +86,16 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     }
   }
 
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+    );
+  }
 
   Widget _buildDropdown(String title, List<String> items, String value, void Function(String?)? onChanged) {
     return DropdownButtonFormField<String>(
@@ -138,7 +148,6 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     if (_selectedParameter == 'Material') {
       return _buildColumnLayout(items);
     }
-
 
     final columns = [
       'S NO.', 'Material', 'Desc', 'Plant', 'Strloc', 'StrlocDesc',
@@ -224,7 +233,6 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Left side: Headers
                   Expanded(
                     flex: 3,
                     child: Column(
@@ -246,31 +254,29 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                       ],
                     ),
                   ),
-                  // Middle: Vertical divider
                   Container(
                     width: 1.0,
                     color: Colors.black,
                     margin: const EdgeInsets.symmetric(horizontal: 16.0),
                   ),
-                  // Right side: Values
                   Expanded(
-                    flex: 3,
+                    flex: 5,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildDataCell(item['Material']),
-                        _buildDataCell(item['Desc']),
-                        _buildDataCell(item['Plant']),
-                        _buildDataCell(item['Strloc']),
-                        _buildDataCell(item['StrlocDesc']),
-                        _buildDataCell(item['Unrestricted']),
-                        _buildDataCell(item['QualityInspection']),
-                        _buildDataCell(item['Blocked']),
-                        _buildDataCell(item['ReturnBlock']),
-                        _buildDataCell(item['VendorCode']),
-                        _buildDataCell(item['VendorName']),
-                        _buildDataCell(item['AtVendor']),
-                        _buildDataCell(item['StockInTransfer']),
+                        Text(item['Material'] ?? 'N/A'),
+                        Text(item['Desc'] ?? 'N/A'),
+                        Text(item['Plant'] ?? 'N/A'),
+                        Text(item['Strloc'] ?? 'N/A'),
+                        Text(item['StrlocDesc'] ?? 'N/A'),
+                        Text(item['Unrestricted'] ?? 'N/A'),
+                        Text(item['QualityInspection'] ?? 'N/A'),
+                        Text(item['Blocked'] ?? 'N/A'),
+                        Text(item['ReturnBlock'] ?? 'N/A'),
+                        Text(item['VendorCode'] ?? 'N/A'),
+                        Text(item['VendorName'] ?? 'N/A'),
+                        Text(item['AtVendor'] ?? 'N/A'),
+                        Text(item['StockInTransfer'] ?? 'N/A'),
                       ],
                     ),
                   ),
@@ -283,50 +289,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     );
   }
 
-  Widget _buildDataCell(dynamic value) {
-    return GestureDetector(
-      onTap: () {
-        if (value != null && value.toString().isNotEmpty) {
-          _showFullTextDialog(value.toString());
-        }
-      },
-      child: Tooltip(
-        message: value?.toString() ?? 'NA',
-        child: Text(
-          value?.toString().isNotEmpty == true ? value.toString() : 'N/A',
-          overflow: TextOverflow.ellipsis,
-          maxLines: 1,
-          style: TextStyle(color: Colors.black),
-        ),
-      ),
-    );
-  }
-
-  void _showFullTextDialog(String fullText) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          // title: Text('Full Text'),
-          content: Text(fullText),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-
-
-
   @override
-
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -346,6 +309,13 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
             bottomLeft: Radius.circular(15),
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+            tooltip: 'Logout',
+          ),
+        ],
       ),
       body: Column(
         children: [
