@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'api_service.dart';
 import 'login_screen.dart';
 
@@ -20,6 +21,9 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
   Map<String, dynamic>? _apiData;
   bool _isLoading = false;
 
+  // Controller to control the input  field
+  final TextEditingController _inputController = TextEditingController();
+
   final List<String> _parameters = ['Plant', 'Material', 'Material Group', 'Str Loc'];
 
   @override
@@ -34,6 +38,32 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     setState(() {
       _company = prefs.getString('company') ?? 'Unknown Company';
     });
+  }
+
+  Future<void> _scanQR() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => Scaffold(
+        appBar: AppBar(
+          title: const Text('Scan QR Code'),
+        ),
+        body: MobileScanner(
+          onDetect: (barcodeCapture) {
+            final barcode = barcodeCapture.barcodes.first;
+            if (barcode.rawValue != null) {
+              Navigator.pop(context, barcode.rawValue);
+            }
+          },
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _inputValue = result;
+        _inputController.text = result;
+      });
+    }
   }
 
   Future<void> _submit() async {
@@ -90,7 +120,6 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
 
-
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const LoginScreen()),
           (route) => false,
@@ -121,9 +150,16 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
 
   Widget _buildInputField() {
     return TextFormField(
-      decoration: const InputDecoration(
+      controller: _inputController,
+      decoration: InputDecoration(
         labelText: 'Enter Value',
-        border: OutlineInputBorder(),
+        border: const OutlineInputBorder(),
+        suffixIcon: _selectedParameter == 'Material'
+            ? IconButton(
+          icon: const Icon(Icons.qr_code),
+          onPressed: _scanQR,
+        )
+            : null,
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -222,10 +258,10 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
           final item = items[index] as Map<String, dynamic>;
 
           return Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+            margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 12.0),
             padding: const EdgeInsets.all(16.0),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.blue, width: 1.0),
+              border: Border.all(color: Colors.black, width: 2.0),
               borderRadius: BorderRadius.circular(12.0),
               color: Colors.yellow[700],
             ),
@@ -239,44 +275,21 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
                         Text('Material:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('Description:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Desc:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
                         Text('Plant:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('Storage Location:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('Storage Location Desc:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('Unrestricted:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('Quality Inspection:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('Blocked:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('Return Block:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('Vendor Code:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('Vendor Name:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('At Vendor:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('Stock in Transfer:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Strloc:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
                       ],
                     ),
                   ),
-                  Container(
-                    width: 1.0,
-                    color: Colors.black,
-                    margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                  ),
                   Expanded(
-                    flex: 5,
+                    flex: 7,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item['Material'] ?? 'N/A'),
-                        Text(item['Desc'] ?? 'N/A'),
-                        Text(item['Plant'] ?? 'N/A'),
-                        Text(item['Strloc'] ?? 'N/A'),
-                        Text(item['StrlocDesc'] ?? 'N/A'),
-                        Text(item['Unrestricted'] ?? 'N/A'),
-                        Text(item['QualityInspection'] ?? 'N/A'),
-                        Text(item['Blocked'] ?? 'N/A'),
-                        Text(item['ReturnBlock'] ?? 'N/A'),
-                        Text(item['VendorCode'] ?? 'N/A'),
-                        Text(item['VendorName'] ?? 'N/A'),
-                        Text(item['AtVendor'] ?? 'N/A'),
-                        Text(item['StockInTransfer'] ?? 'N/A'),
+                        Text(item['Material'] ?? 'N/A', style: const TextStyle(color: Colors.black)),
+                        Text(item['Desc'] ?? 'N/A', style: const TextStyle(color: Colors.black)),
+                        Text(item['Plant'] ?? 'N/A', style: const TextStyle(color: Colors.black)),
+                        Text(item['Strloc'] ?? 'N/A', style: const TextStyle(color: Colors.black)),
                       ],
                     ),
                   ),

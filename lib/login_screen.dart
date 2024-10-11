@@ -13,7 +13,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  String _username = ''; // Changed from email to username
+  String _username = '';
   String _password = '';
   String _selectedCompany = 'AAPL';
   late ApiService apiService;
