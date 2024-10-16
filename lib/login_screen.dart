@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    apiService = ApiService('http://10.7.1.145/devm/Did-Material/public/index.php');
+    apiService = ApiService('https://digital.aipportals.com/api/login');
   }
 
   Future<void> _login() async {

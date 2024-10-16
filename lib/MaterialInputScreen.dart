@@ -1,3 +1,4 @@
+import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,7 +22,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
   Map<String, dynamic>? _apiData;
   bool _isLoading = false;
 
-  // Controller to control the input  field
+
   final TextEditingController _inputController = TextEditingController();
 
   final List<String> _parameters = ['Plant', 'Material', 'Material Group', 'Str Loc'];
@@ -29,7 +30,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
   @override
   void initState() {
     super.initState();
-    apiService = ApiService('http://10.7.5.52:8084/AAPLSTORE');
+    apiService = ApiService('https://api.aipportals.com//AAPLSTORE');
     _loadCompany();
   }
 
@@ -173,6 +174,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     );
   }
 
+
   Widget _buildDataTable() {
     if (_apiData == null || _apiData!['Items'] == null) {
       return const Center(child: Text('No data available'));
@@ -200,9 +202,9 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       }
 
       final cells = [
-        DataCell(Center(child: Text((index + 1).toString()))),
+        DataCell( Center(child: Text((index + 1).toString()))),
         DataCell(Text(getCellValue('Material'))),
-        DataCell(Text(getCellValue('Desc'))),
+        DataCell(Center(child: Text(getCellValue('Desc')))),
         DataCell(Center(child: Text(getCellValue('Plant')))),
         DataCell(Center(child: Text(getCellValue('Strloc')))),
         DataCell(Center(child: Text(getCellValue('StrlocDesc')))),
@@ -222,33 +224,44 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     return Expanded(
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: SingleChildScrollView(
-          child: DataTable(
-            columnSpacing: 20.0,
-            headingRowColor: WidgetStateProperty.all(Colors.blue[900]),
-            columns: columns.map<DataColumn>((column) {
-              return DataColumn(
-                label: Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      column,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+            width: 2200, // width of content
+            child: DataTable2(
+              columnSpacing: 2.0,
+              horizontalMargin: 1.0,
+              minWidth: 1600,
+              headingRowColor: WidgetStateProperty.all(Colors.blue[900]),
+              headingRowHeight: 55.0,
+              fixedTopRows: 1,
+              columns: columns.map<DataColumn>((column) {
+                return DataColumn(
+                  label: Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Center(
+                        child: Text(
+                          column,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
-            rows: rows,
+                );
+              }).toList(),
+              rows: rows,
+            ),
           ),
         ),
       ),
     );
   }
+
 
   Widget _buildColumnLayout(List<dynamic> items) {
     return Expanded(

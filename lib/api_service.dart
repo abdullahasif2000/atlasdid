@@ -8,11 +8,13 @@ class ApiService {
 
   ApiService(this.baseUrl, {this.defaultTimeout = const Duration(seconds: 20)});
 
+
   Future<Map<String, dynamic>> login(String username, String password, {Duration? timeout}) async {
-    final uri = Uri.parse('$baseUrl/api/login');
+
+    final uri = Uri.parse('https://digital.aipportals.com/api/login');
 
     final body = json.encode({
-      'username': username, // Use username instead of email
+      'username': username,
       'password': password,
     });
 
@@ -45,6 +47,7 @@ class ApiService {
       throw Exception('Unexpected error: $e');
     }
   }
+
 
   Future<Map<String, dynamic>> getData({
     required String company,
@@ -84,3 +87,4 @@ class ApiService {
     }
   }
 }
+
