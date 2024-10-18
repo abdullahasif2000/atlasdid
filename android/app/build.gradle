@@ -6,6 +6,12 @@ plugins {
 }
 
 android {
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def newName = "Atlas Stock view-${variant.buildType.name}.apk"
+            outputFileName = newName
+        }
+    }
     namespace = "com.example.atlas"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion

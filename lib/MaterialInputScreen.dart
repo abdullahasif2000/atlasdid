@@ -80,17 +80,32 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         return;
       }
 
+      // Ensure the input value has the correct length
+      if (_selectedParameter == 'Material' && _inputValue.length > 10) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter up to 10 digits only')),
+        );
+        return;
+      }
+
       setState(() {
         _isLoading = true;
       });
 
+      String fullMaterialNumber = _inputValue;
+
+      // Prepend leading zeros only if the selected parameter is 'Material'
+      if (_selectedParameter == 'Material') {
+        fullMaterialNumber = '00000000' + _inputValue;
+      }
+
       try {
         final data = await apiService.getData(
           company: _company,
-          plant: _selectedParameter == 'Plant' ? _inputValue : '',
-          mat: _selectedParameter == 'Material' ? _inputValue : '',
-          matgrp: _selectedParameter == 'Material Group' ? _inputValue : '',
-          strloc: _selectedParameter == 'Str Loc' ? _inputValue : '',
+          plant: _selectedParameter == 'Plant' ? fullMaterialNumber : '',
+          mat: _selectedParameter == 'Material' ? fullMaterialNumber : '',
+          matgrp: _selectedParameter == 'Material Group' ? fullMaterialNumber : '',
+          strloc: _selectedParameter == 'Str Loc' ? fullMaterialNumber : '',
         );
 
         if ((data['Items'] as List<dynamic>?)?.isEmpty == true) {
@@ -116,6 +131,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       }
     }
   }
+
 
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
@@ -153,7 +169,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     return TextFormField(
       controller: _inputController,
       decoration: InputDecoration(
-        labelText: 'Enter Value',
+        labelText: 'Enter Value ',
         border: const OutlineInputBorder(),
         suffixIcon: _selectedParameter == 'Material'
             ? IconButton(
@@ -271,7 +287,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
           final item = items[index] as Map<String, dynamic>;
 
           return Container(
-            margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 12.0),
+            margin: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 6.0),
             padding: const EdgeInsets.all(16.0),
             decoration: BoxDecoration(
               border: Border.all(color: Colors.black, width: 2.0),
@@ -283,7 +299,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
-                    flex: 3,
+                    flex: 2,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
@@ -295,7 +311,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                     ),
                   ),
                   Expanded(
-                    flex: 7,
+                    flex: 8,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
