@@ -17,6 +17,12 @@ dependencies:
   cupertino_icons: ^1.0.8
   data_table_2: ^2.3.0
   mobile_scanner: ^6.0.0
+  pdf: ^3.11.1
+  open_file: ^3.5.9
+  printing: ^5.10.0
+  path_provider: ^2.0.11
+  permission_handler: ^10.2.0
+
 
 
 dev_dependencies:
@@ -32,6 +38,7 @@ flutter:
 
     - assets/images/login.png
     - assets/images/Atlas.png
+    - assets/fonts/Roboto-Regular.ttf
 
 
 flutter_icons:

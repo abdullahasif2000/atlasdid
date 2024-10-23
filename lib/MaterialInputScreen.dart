@@ -21,11 +21,18 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
   late ApiService apiService;
   Map<String, dynamic>? _apiData;
   bool _isLoading = false;
+  String _strLocFilter = ''; // New variable for filtering by Str Loc
 
 
   final TextEditingController _inputController = TextEditingController();
 
-  final List<String> _parameters = ['Plant', 'Material', 'Material Group', 'Str Loc'];
+  final List<String> _parameters = [
+    'Plant',
+    'Material',
+    'Material Group',
+    'Str Loc'
+  ];
+  final List<String> _plants = ['KHI', 'SKP', 'MDP', 'EKHI', 'DKHI', 'GKHI'];
 
   @override
   void initState() {
@@ -44,19 +51,20 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
   Future<void> _scanQR() async {
     final result = await showDialog<String>(
       context: context,
-      builder: (context) => Scaffold(
-        appBar: AppBar(
-          title: const Text('Scan QR Code'),
-        ),
-        body: MobileScanner(
-          onDetect: (barcodeCapture) {
-            final barcode = barcodeCapture.barcodes.first;
-            if (barcode.rawValue != null) {
-              Navigator.pop(context, barcode.rawValue);
-            }
-          },
-        ),
-      ),
+      builder: (context) =>
+          Scaffold(
+            appBar: AppBar(
+              title: const Text('Scan QR Code'),
+            ),
+            body: MobileScanner(
+              onDetect: (barcodeCapture) {
+                final barcode = barcodeCapture.barcodes.first;
+                if (barcode.rawValue != null) {
+                  Navigator.pop(context, barcode.rawValue);
+                }
+              },
+            ),
+          ),
     );
 
     if (result != null) {
@@ -104,7 +112,9 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
           company: _company,
           plant: _selectedParameter == 'Plant' ? fullMaterialNumber : '',
           mat: _selectedParameter == 'Material' ? fullMaterialNumber : '',
-          matgrp: _selectedParameter == 'Material Group' ? fullMaterialNumber : '',
+          matgrp: _selectedParameter == 'Material Group'
+              ? fullMaterialNumber
+              : '',
           strloc: _selectedParameter == 'Str Loc' ? fullMaterialNumber : '',
         );
 
@@ -132,7 +142,6 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     }
   }
 
-
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -143,7 +152,27 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     );
   }
 
-  Widget _buildDropdown(String title, List<String> items, String value, void Function(String?)? onChanged) {
+  Widget _buildStrLocFilter() {
+    return SizedBox(
+      width: 150, // Adjust this width to make it smaller
+      child: TextFormField(
+        decoration: const InputDecoration(
+          labelText: 'Filter by Str Loc',
+          border: OutlineInputBorder(),
+        ),
+        onChanged: (value) {
+          setState(() {
+            _strLocFilter = value.trim();
+          });
+        },
+      ),
+    );
+  }
+
+
+
+  Widget _buildDropdown(String title, List<String> items, String value,
+      void Function(String?)? onChanged) {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
         labelText: title,
@@ -154,6 +183,12 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         setState(() {
           _selectedParameter = newValue!;
           _apiData = null;
+
+          // Clear the input value if switching from any other another parameter
+          if (_selectedParameter != 'Plant,Material,Material Group,Str Loc') {
+            _inputValue = ''; // Clear the value when changing from Plant
+            _inputController.clear(); // Clear the input field if not Plant
+          }
         });
       },
       items: items.map<DropdownMenuItem<String>>((String item) {
@@ -165,29 +200,52 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     );
   }
 
+
   Widget _buildInputField() {
-    return TextFormField(
-      controller: _inputController,
-      decoration: InputDecoration(
-        labelText: 'Enter Value ',
-        border: const OutlineInputBorder(),
-        suffixIcon: _selectedParameter == 'Material'
-            ? IconButton(
-          icon: const Icon(Icons.qr_code),
-          onPressed: _scanQR,
-        )
-            : null,
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter a value';
-        }
-        return null;
-      },
-      onSaved: (value) {
-        _inputValue = value ?? '';
-      },
-    );
+    if (_selectedParameter == 'Plant') {
+      return DropdownButtonFormField<String>(
+        decoration: const InputDecoration(
+          labelText: 'Select Plant',
+          border: OutlineInputBorder(),
+        ),
+        value: _inputValue.isNotEmpty ? _inputValue : null,
+        items: _plants.map((String plant) {
+          return DropdownMenuItem<String>(
+            value: plant,
+            child: Text(plant),
+          );
+        }).toList(),
+        onChanged: (String? newValue) {
+          setState(() {
+            _inputValue = newValue ?? '';
+            _inputController.text = _inputValue;
+          });
+        },
+      );
+    } else {
+      return TextFormField(
+        controller: _inputController,
+        decoration: InputDecoration(
+          labelText: 'Enter Value ',
+          border: const OutlineInputBorder(),
+          suffixIcon: _selectedParameter == 'Material'
+              ? IconButton(
+            icon: const Icon(Icons.qr_code),
+            onPressed: _scanQR,
+          )
+              : null,
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter a value';
+          }
+          return null;
+        },
+        onSaved: (value) {
+          _inputValue = value ?? '';
+        },
+      );
+    }
   }
 
 
@@ -196,29 +254,45 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       return const Center(child: Text('No data available'));
     }
 
+    // Get the list of items from the API response
     final items = _apiData!['Items'] as List<dynamic>? ?? [];
     if (items.isEmpty) return const Center(child: Text('No data available'));
+
+    // Apply filter for "Str Loc" if a value is entered
+    final filteredItems = _strLocFilter.isNotEmpty
+        ? items.where((item) {
+      final strLoc = item['Strloc'] ?? '';
+      return strLoc.toString().toLowerCase().contains(
+          _strLocFilter.toLowerCase());
+    }).toList()
+        : items;
 
     if (_selectedParameter == 'Material') {
       return _buildColumnLayout(items);
     }
 
+    // The rest of the DataTable generation logic remains the same
     final columns = [
       'S NO.', 'Material', 'Desc', 'Plant', 'Strloc', 'StrlocDesc',
       'Unrestricted', 'QualityInspection', 'Blocked', 'ReturnBlock',
       'VendorCode', 'VendorName', 'AtVendor', 'StockInTransfer'
     ];
 
-    final rows = items.asMap().entries.map<DataRow>((entry) {
+    final rows = filteredItems
+        .asMap()
+        .entries
+        .map<DataRow>((entry) {
       final index = entry.key;
       final item = entry.value as Map<String, dynamic>;
 
       String getCellValue(String key) {
-        return item[key]?.toString().isNotEmpty == true ? item[key]! : 'N/A';
+        return item[key]
+            ?.toString()
+            .isNotEmpty == true ? item[key]! : 'N/A';
       }
 
       final cells = [
-        DataCell( Center(child: Text((index + 1).toString()))),
+        DataCell(Center(child: Text((index + 1).toString()))),
         DataCell(Text(getCellValue('Material'))),
         DataCell(Center(child: Text(getCellValue('Desc')))),
         DataCell(Center(child: Text(getCellValue('Plant')))),
@@ -280,11 +354,24 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
 
 
   Widget _buildColumnLayout(List<dynamic> items) {
+    // Apply filter for "Str Loc" if a value is entered
+    final filteredItems = _strLocFilter.isNotEmpty
+        ? items.where((item) {
+      final strLoc = item['Strloc'] ?? '';
+      return strLoc.toString().toLowerCase().contains(
+          _strLocFilter.toLowerCase());
+    }).toList()
+        : items;
+
+    if (filteredItems.isEmpty) {
+      return const Center(child: Text('No results available for the filter.'));
+    }
+
     return Expanded(
       child: ListView.builder(
-        itemCount: items.length,
+        itemCount: filteredItems.length,
         itemBuilder: (context, index) {
-          final item = items[index] as Map<String, dynamic>;
+          final item = filteredItems[index] as Map<String, dynamic>;
 
           return Container(
             margin: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 6.0),
@@ -303,10 +390,14 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
-                        Text('Material:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('Desc:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('Plant:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                        Text('Strloc:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Material:', style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Desc:', style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Plant:', style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Strloc:', style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black)),
                       ],
                     ),
                   ),
@@ -315,10 +406,14 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item['Material'] ?? 'N/A', style: const TextStyle(color: Colors.black)),
-                        Text(item['Desc'] ?? 'N/A', style: const TextStyle(color: Colors.black)),
-                        Text(item['Plant'] ?? 'N/A', style: const TextStyle(color: Colors.black)),
-                        Text(item['Strloc'] ?? 'N/A', style: const TextStyle(color: Colors.black)),
+                        Text(item['Material'] ?? 'N/A', style: const TextStyle(
+                            color: Colors.black)),
+                        Text(item['Desc'] ?? 'N/A', style: const TextStyle(
+                            color: Colors.black)),
+                        Text(item['Plant'] ?? 'N/A', style: const TextStyle(
+                            color: Colors.black)),
+                        Text(item['Strloc'] ?? 'N/A', style: const TextStyle(
+                            color: Colors.black)),
                       ],
                     ),
                   ),
@@ -329,6 +424,14 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         },
       ),
     );
+  }
+
+
+  // Show the filter only for Material, Material Group, and Plant parameters
+  bool _shouldShowFilter() {
+    return _selectedParameter == 'Material' ||
+        _selectedParameter == 'Material Group' ||
+        _selectedParameter == 'Plant';
   }
 
   @override
@@ -393,14 +496,18 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                     ),
                     child: const Text('Submit'),
                   ),
+                  const SizedBox(height: 16.0),
+                  if (_isLoading)
+                    const CircularProgressIndicator()
+                  else
+                    if (_apiData != null && _shouldShowFilter())
+                      _buildStrLocFilter(),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 16.0),
-          if (_isLoading)
-            const CircularProgressIndicator()
-          else
+          if (_apiData != null && !_isLoading)
             _buildDataTable(),
         ],
       ),
