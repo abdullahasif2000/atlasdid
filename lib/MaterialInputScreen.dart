@@ -1,10 +1,18 @@
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:pdf/pdf.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'api_service.dart';
 import 'login_screen.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io'; // file handling
+import 'package:share_plus/share_plus.dart';
+
 
 class MaterialInputScreen extends StatefulWidget {
   const MaterialInputScreen({super.key});
@@ -21,7 +29,8 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
   late ApiService apiService;
   Map<String, dynamic>? _apiData;
   bool _isLoading = false;
-  String _strLocFilter = ''; // New variable for filtering by Str Loc
+  String _strLocFilter = '';
+  String _currentDateTime = '';
 
 
   final TextEditingController _inputController = TextEditingController();
@@ -47,6 +56,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       _company = prefs.getString('company') ?? 'Unknown Company';
     });
   }
+
 
   Future<void> _scanQR() async {
     final result = await showDialog<String>(
@@ -124,6 +134,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
           );
         } else {
           setState(() {
+            _currentDateTime = DateTime.now().toString();
             _apiData = data;
           });
         }
@@ -152,9 +163,169 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     );
   }
 
+
+  Future<void> _generatePdf() async {
+    if (_apiData == null || _apiData!['Items'] == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No data available to generate PDF')),
+      );
+      return;
+    }
+
+    final items = _apiData!['Items'] as List<dynamic>? ?? [];
+    if (items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No data available to generate PDF')),
+      );
+      return;
+    }
+
+    // Get the current date and time
+    _currentDateTime;
+
+    // Create a new PDF document
+    final pdf = pw.Document();
+
+    // Add content to the PDF using MultiPage to handle large tables
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(20),
+        build: (pw.Context context) {
+          return [
+            pw.Text(
+              'Stock Data Report',
+              style: pw.TextStyle(
+                fontSize: 24,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+            pw.SizedBox(height: 10),
+
+            // Add the current date and time below the title
+            pw.Text(
+              'Generated on: $_currentDateTime',
+              style: pw.TextStyle(
+                fontSize: 12,
+                color: PdfColors.grey,
+              ),
+            ),
+            pw.SizedBox(height: 20),
+
+            // Table with all headers and data, split across pages if needed
+            pw.TableHelper.fromTextArray(
+              headers: const [
+                'Material',
+                'Desc',
+                'Plant',
+                'Strloc',
+                'Unrestricted',
+                'StrlocDesc',
+                'Material Group',
+                'QualityInspection',
+                'Blocked',
+                'ReturnBlock',
+                'VendorCode',
+                'VendorName',
+                'AtVendor',
+                'StockInTransfer',
+              ],
+              data: items.map((item) {
+                return [
+                  item['Material'] ?? 'N/A',
+                  item['Desc'] ?? 'N/A',
+                  item['Plant'] ?? 'N/A',
+                  item['Strloc'] ?? 'N/A',
+                  item['StrlocDesc'] ?? 'N/A',
+                  item['Material Group'] ?? 'N/A',
+                  item['Unrestricted'] ?? 'N/A',
+                  item['QualityInspection'] ?? 'N/A',
+                  item['Blocked'] ?? 'N/A',
+                  item['ReturnBlock'] ?? 'N/A',
+                  item['VendorCode'] ?? 'N/A',
+                  item['VendorName'] ?? 'N/A',
+                  item['AtVendor'] ?? 'N/A',
+                  item['StockInTransfer'] ?? 'N/A',
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.black,
+              ),
+              headerDecoration: pw.BoxDecoration(
+                color: PdfColors.grey300,
+              ),
+              cellAlignment: pw.Alignment.centerLeft,
+              cellHeight: 30,
+              cellStyle: const pw.TextStyle(fontSize: 10),
+              columnWidths: {
+                0: pw.FlexColumnWidth(4), // Material
+                1: pw.FlexColumnWidth(4), // Description
+                2: pw.FlexColumnWidth(4), // Plant
+                3: pw.FlexColumnWidth(4), // Str Loc
+                4: pw.FlexColumnWidth(4),
+                5: pw.FlexColumnWidth(4),
+                6: pw.FlexColumnWidth(4),
+                7: pw.FlexColumnWidth(4),
+                8: pw.FlexColumnWidth(4),
+                9: pw.FlexColumnWidth(4),
+                10: pw.FlexColumnWidth(4),
+                11: pw.FlexColumnWidth(4),
+                12: pw.FlexColumnWidth(4),
+                13: pw.FlexColumnWidth(4),
+                14: pw.FlexColumnWidth(4), // Unrestricted
+              },
+            ),
+          ];
+        },
+      ),
+    );
+
+    try {
+      // Request storage permission
+      var status = await Permission.storage.status;
+      if (!status.isGranted) {
+        status = await Permission.storage.request();
+        if (!status.isGranted) {
+          throw Exception("Storage permission not granted");
+        }
+      }
+
+      // Get the Downloads directory
+      final List<
+          Directory>? downloadsDirectory = await getExternalStorageDirectories(
+        type: StorageDirectory.downloads,
+      );
+
+      if (downloadsDirectory == null || downloadsDirectory.isEmpty) {
+        throw Exception("Unable to find downloads directory");
+      }
+
+      // Save the PDF file to the Downloads folder
+      final file = File(
+          '${downloadsDirectory.first.path}/material_data_report.pdf');
+      await file.writeAsBytes(await pdf.save());
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('PDF saved to Downloads folder')),
+      );
+      // Share the file using shareXFiles
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'Material Data Report PDF',
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error generating PDF: $e')),
+      );
+    }
+  }
+
+
   Widget _buildStrLocFilter() {
     return SizedBox(
-      width: 150, // Adjust this width to make it smaller
+      width: 150,
+      height: 40,
       child: TextFormField(
         decoration: const InputDecoration(
           labelText: 'Filter by Str Loc',
@@ -168,7 +339,6 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       ),
     );
   }
-
 
 
   Widget _buildDropdown(String title, List<String> items, String value,
@@ -271,11 +441,22 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       return _buildColumnLayout(items);
     }
 
-    // The rest of the DataTable generation logic remains the same
     final columns = [
-      'S NO.', 'Material', 'Desc', 'Plant', 'Strloc', 'StrlocDesc',
-      'Unrestricted', 'QualityInspection', 'Blocked', 'ReturnBlock',
-      'VendorCode', 'VendorName', 'AtVendor', 'StockInTransfer'
+      'S NO.',
+      'Material',
+      'Desc',
+      'Plant',
+      'Strloc',
+      'StrlocDesc',
+      'Material Group',
+      'Unrestricted',
+      'QualityInspection',
+      'Blocked',
+      'ReturnBlock',
+      'VendorCode',
+      'VendorName',
+      'AtVendor',
+      'StockInTransfer'
     ];
 
     final rows = filteredItems
@@ -298,6 +479,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         DataCell(Center(child: Text(getCellValue('Plant')))),
         DataCell(Center(child: Text(getCellValue('Strloc')))),
         DataCell(Center(child: Text(getCellValue('StrlocDesc')))),
+        DataCell(Center(child: Text(getCellValue('Material Group')))),
         DataCell(Center(child: Text(getCellValue('Unrestricted')))),
         DataCell(Center(child: Text(getCellValue('QualityInspection')))),
         DataCell(Center(child: Text(getCellValue('Blocked')))),
@@ -319,9 +501,9 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
           child: SizedBox(
             width: 2200, // width of content
             child: DataTable2(
-              columnSpacing: 2.0,
+              columnSpacing: 1.0,
               horizontalMargin: 1.0,
-              minWidth: 1600,
+              minWidth: 1700,
               headingRowColor: WidgetStateProperty.all(Colors.blue[900]),
               headingRowHeight: 55.0,
               fixedTopRows: 1,
@@ -351,7 +533,6 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       ),
     );
   }
-
 
   Widget _buildColumnLayout(List<dynamic> items) {
     // Apply filter for "Str Loc" if a value is entered
@@ -389,9 +570,8 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                     flex: 2,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text('Material:', style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.black)),
+                      children: const [Text('Material:', style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.black)),
                         Text('Desc:', style: TextStyle(
                             fontWeight: FontWeight.bold, color: Colors.black)),
                         Text('Plant:', style: TextStyle(
@@ -471,6 +651,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: <Widget>[
+                  // Dropdown for selecting the parameter
                   _buildDropdown(
                     'Select Parameter',
                     _parameters,
@@ -483,32 +664,62 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                     },
                   ),
                   const SizedBox(height: 16.0),
+
                   _buildInputField(),
-                  const SizedBox(height: 10.0),
-                  ElevatedButton(
-                    onPressed: _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[900],
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+
+                  const SizedBox(height: 12.0),
+
+                  // Display Str Loc filter before buttons
+                  if (_selectedParameter == 'Material' ||
+                      _selectedParameter == 'Material Group' ||
+                      _selectedParameter == 'Plant')
+                    Column(
+                      children: [
+                        _buildStrLocFilter(),
+                        const SizedBox(height: 16.0),
+                      ],
                     ),
-                    child: const Text('Submit'),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _generatePdf,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green[700],
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('Generate PDF'),
+                        ),
+                      ),
+                      const SizedBox(width: 16.0),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue[900],
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('Submit'),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16.0),
-                  if (_isLoading)
-                    const CircularProgressIndicator()
-                  else
-                    if (_apiData != null && _shouldShowFilter())
-                      _buildStrLocFilter(),
+
+                  if (_isLoading) const CircularProgressIndicator(),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 16.0),
-          if (_apiData != null && !_isLoading)
-            _buildDataTable(),
+          const SizedBox(height: 8.0),
+          if (_apiData != null && !_isLoading) _buildDataTable(),
         ],
       ),
     );
