@@ -1,7 +1,8 @@
+import 'dart:isolate';
+import 'dart:async';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -10,8 +11,33 @@ import 'login_screen.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:io'; // file handling
+import 'dart:io';
 import 'package:share_plus/share_plus.dart';
+
+class PdfGenerator {
+  static Future<void> generatePdfInIsolate(SendPort sendPort, List<Map<String, dynamic>> items) async {
+    final pdf = pw.Document();
+
+    // Build PDF content
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            children: [
+              for (var item in items)
+                pw.Text("Material: ${item['Material']}, Desc: ${item['Desc']}, Plant: ${item['Plant']}"),
+              // Add more fields as required
+            ],
+          );
+        },
+      ),
+    );
+
+    // Send PDF data back to the main thread
+    final pdfData = await pdf.save();
+    sendPort.send(pdfData);
+  }
+}
 
 
 class MaterialInputScreen extends StatefulWidget {
@@ -98,7 +124,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         return;
       }
 
-      // Ensure the input value has the correct length
+
       if (_selectedParameter == 'Material' && _inputValue.length > 10) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please enter up to 10 digits only')),
@@ -114,7 +140,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
 
       // Prepend leading zeros only if the selected parameter is 'Material'
       if (_selectedParameter == 'Material') {
-        fullMaterialNumber = '00000000' + _inputValue;
+        fullMaterialNumber = '00000000$_inputValue';
       }
 
       try {
@@ -180,109 +206,90 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       return;
     }
 
-    // Get the current date and time
-    _currentDateTime;
+    // Show a loading indicator
+    setState(() {
+      _isLoading = true; //  loading state
+    });
 
-    // Create a new PDF document
-    final pdf = pw.Document();
+    //  ReceivePort to receive the PDF data
+    final receivePort = ReceivePort();
 
-    // Add content to the PDF using MultiPage to handle large tables
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(20),
-        build: (pw.Context context) {
-          return [
-            pw.Text(
-              'Stock Data Report',
-              style: pw.TextStyle(
-                fontSize: 24,
-                fontWeight: pw.FontWeight.bold,
+    // Spawn an isolate to generate the PDF
+    await Isolate.spawn((List<dynamic> params) async {
+      final SendPort sendPort = params[0];
+      final List<dynamic> items = params[1];
+
+      final pdf = pw.Document();
+      final String currentDateTime = DateTime.now().toString(); // Get the current date and time
+
+      // Add content to the PDF using MultiPage to handle large tables
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(20),
+          build: (pw.Context context) {
+            return [
+              pw.Text(
+                'Stock Data Report',
+                style: pw.TextStyle(
+                  fontSize: 22,
+                  fontWeight: pw.FontWeight.bold,
+                ),
               ),
-            ),
-            pw.SizedBox(height: 10),
-
-            // Add the current date and time below the title
-            pw.Text(
-              'Generated on: $_currentDateTime',
-              style: pw.TextStyle(
-                fontSize: 12,
-                color: PdfColors.grey,
+              pw.SizedBox(height: 10),
+              pw.Text(
+                'Generated on: $currentDateTime',
+                style: const pw.TextStyle(
+                  fontSize: 12,
+                  color: PdfColors.grey,
+                ),
               ),
-            ),
-            pw.SizedBox(height: 20),
 
-            // Table with all headers and data, split across pages if needed
-            pw.TableHelper.fromTextArray(
-              headers: const [
-                'Material',
-                'Desc',
-                'Plant',
-                'Strloc',
-                'Unrestricted',
-                'StrlocDesc',
-                'Material Group',
-                'QualityInspection',
-                'Blocked',
-                'ReturnBlock',
-                'VendorCode',
-                'VendorName',
-                'AtVendor',
-                'StockInTransfer',
-              ],
-              data: items.map((item) {
-                return [
-                  item['Material'] ?? 'N/A',
-                  item['Desc'] ?? 'N/A',
-                  item['Plant'] ?? 'N/A',
-                  item['Strloc'] ?? 'N/A',
-                  item['StrlocDesc'] ?? 'N/A',
-                  item['Material Group'] ?? 'N/A',
-                  item['Unrestricted'] ?? 'N/A',
-                  item['QualityInspection'] ?? 'N/A',
-                  item['Blocked'] ?? 'N/A',
-                  item['ReturnBlock'] ?? 'N/A',
-                  item['VendorCode'] ?? 'N/A',
-                  item['VendorName'] ?? 'N/A',
-                  item['AtVendor'] ?? 'N/A',
-                  item['StockInTransfer'] ?? 'N/A',
-                ];
-              }).toList(),
-              headerStyle: pw.TextStyle(
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.black,
+              pw.SizedBox(height: 20),
+              pw.TableHelper.fromTextArray(
+                headers: const [
+                  'Material', 'Desc', 'Plant', 'Strloc', 'Unrestricted', 'StrlocDesc',
+                  'Material Group', 'Quality Inspection', 'Blocked', 'StockInTransfer',
+                ],
+                data: items.map((item) {
+                  return [
+                    item['Material'] ?? 'N/A',
+                    item['Desc'] ?? 'N/A',
+                    item['Plant'] ?? 'N/A',
+                    item['Strloc'] ?? 'N/A',
+                    item['Unrestricted'] ?? 'N/A',
+                    item['StrlocDesc'] ?? 'N/A',
+                    item['Material Group'] ?? 'N/A',
+                    item['QualityInspection'] ?? 'N/A',
+                    item['Blocked'] ?? 'N/A',
+                    item['StockInTransfer'] ?? 'N/A',
+                  ];
+                }).toList(),
+                headerStyle: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.white,
+                ),
+                headerDecoration: const pw.BoxDecoration(
+                  color: PdfColors.blue900,
+                ),
+                cellAlignment: pw.Alignment.centerLeft,
+                cellHeight: 35,
+                cellStyle: const pw.TextStyle(fontSize: 10),
               ),
-              headerDecoration: pw.BoxDecoration(
-                color: PdfColors.grey300,
-              ),
-              cellAlignment: pw.Alignment.centerLeft,
-              cellHeight: 30,
-              cellStyle: const pw.TextStyle(fontSize: 10),
-              columnWidths: {
-                0: pw.FlexColumnWidth(4), // Material
-                1: pw.FlexColumnWidth(4), // Description
-                2: pw.FlexColumnWidth(4), // Plant
-                3: pw.FlexColumnWidth(4), // Str Loc
-                4: pw.FlexColumnWidth(4),
-                5: pw.FlexColumnWidth(4),
-                6: pw.FlexColumnWidth(4),
-                7: pw.FlexColumnWidth(4),
-                8: pw.FlexColumnWidth(4),
-                9: pw.FlexColumnWidth(4),
-                10: pw.FlexColumnWidth(4),
-                11: pw.FlexColumnWidth(4),
-                12: pw.FlexColumnWidth(4),
-                13: pw.FlexColumnWidth(4),
-                14: pw.FlexColumnWidth(4), // Unrestricted
-              },
-            ),
-          ];
-        },
-      ),
-    );
+            ];
+          },
+        ),
+      );
 
+      // Send the generated PDF data back to the main thread
+      sendPort.send(await pdf.save());
+    }, [receivePort.sendPort, items]);
+
+    // Get the generated PDF data
+    final pdfData = await receivePort.first as List<int>;
+
+    // Handle file saving and sharing
     try {
-      // Request storage permission
       var status = await Permission.storage.status;
       if (!status.isGranted) {
         status = await Permission.storage.request();
@@ -292,8 +299,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       }
 
       // Get the Downloads directory
-      final List<
-          Directory>? downloadsDirectory = await getExternalStorageDirectories(
+      final List<Directory>? downloadsDirectory = await getExternalStorageDirectories(
         type: StorageDirectory.downloads,
       );
 
@@ -302,14 +308,14 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       }
 
       // Save the PDF file to the Downloads folder
-      final file = File(
-          '${downloadsDirectory.first.path}/material_data_report.pdf');
-      await file.writeAsBytes(await pdf.save());
+      final file = File('${downloadsDirectory.first.path}/material_data_report.pdf');
+      await file.writeAsBytes(pdfData);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('PDF saved to Downloads folder')),
       );
-      // Share the file using shareXFiles
+
+      // File sharing
       await Share.shareXFiles(
         [XFile(file.path)],
         text: 'Material Data Report PDF',
@@ -318,8 +324,14 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error generating PDF: $e')),
       );
+    } finally {
+      // Hide loading indicator
+      setState(() {
+        _isLoading = false; // Reset loading state
+      });
     }
   }
+
 
 
   Widget _buildStrLocFilter() {
@@ -418,7 +430,6 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     }
   }
 
-
   Widget _buildDataTable() {
     if (_apiData == null || _apiData!['Items'] == null) {
       return const Center(child: Text('No data available'));
@@ -452,10 +463,10 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       'Unrestricted',
       'QualityInspection',
       'Blocked',
-      'ReturnBlock',
-      'VendorCode',
-      'VendorName',
-      'AtVendor',
+      // 'ReturnBlock',
+      // 'VendorCode',
+      // 'VendorName',
+      // 'AtVendor',
       'StockInTransfer'
     ];
 
@@ -483,10 +494,10 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         DataCell(Center(child: Text(getCellValue('Unrestricted')))),
         DataCell(Center(child: Text(getCellValue('QualityInspection')))),
         DataCell(Center(child: Text(getCellValue('Blocked')))),
-        DataCell(Center(child: Text(getCellValue('ReturnBlock')))),
-        DataCell(Center(child: Text(getCellValue('VendorCode')))),
-        DataCell(Center(child: Text(getCellValue('VendorName')))),
-        DataCell(Center(child: Text(getCellValue('AtVendor')))),
+        // DataCell(Center(child: Text(getCellValue('ReturnBlock')))),
+        // DataCell(Center(child: Text(getCellValue('VendorCode')))),
+        // DataCell(Center(child: Text(getCellValue('VendorName')))),
+        // DataCell(Center(child: Text(getCellValue('AtVendor')))),
         DataCell(Center(child: Text(getCellValue('StockInTransfer')))),
       ];
 
@@ -499,7 +510,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
         child: Align(
           alignment: Alignment.centerLeft,
           child: SizedBox(
-            width: 2200, // width of content
+            width: 2100, // width of content
             child: DataTable2(
               columnSpacing: 1.0,
               horizontalMargin: 1.0,
@@ -534,8 +545,10 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
     );
   }
 
+
+
   Widget _buildColumnLayout(List<dynamic> items) {
-    // Apply filter for "Str Loc" if a value is entered
+    // Apply filter for Str Loc if a value is entered
     final filteredItems = _strLocFilter.isNotEmpty
         ? items.where((item) {
       final strLoc = item['Strloc'] ?? '';
@@ -566,11 +579,11 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    flex: 2,
+                  const Expanded(
+                    flex: 4,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [Text('Material:', style: TextStyle(
+                      children: [Text('Material:', style: TextStyle(
                           fontWeight: FontWeight.bold, color: Colors.black)),
                         Text('Desc:', style: TextStyle(
                             fontWeight: FontWeight.bold, color: Colors.black)),
@@ -578,11 +591,21 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                             fontWeight: FontWeight.bold, color: Colors.black)),
                         Text('Strloc:', style: TextStyle(
                             fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('StrlocDesc:', style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('MatGroup:', style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Unrestricted:', style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('QualityInspec:', style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Blocked:', style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black)),
                       ],
                     ),
                   ),
                   Expanded(
-                    flex: 8,
+                    flex: 9,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -593,6 +616,16 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                         Text(item['Plant'] ?? 'N/A', style: const TextStyle(
                             color: Colors.black)),
                         Text(item['Strloc'] ?? 'N/A', style: const TextStyle(
+                            color: Colors.black)),
+                        Text(item['StrlocDesc'] ?? 'N/A', style: const TextStyle(
+                            color: Colors.black)),
+                        Text(item['Material Group'] ?? 'N/A', style: const TextStyle(
+                            color: Colors.black)),
+                        Text(item['Unrestricted'] ?? 'N/A', style: const TextStyle(
+                            color: Colors.black)),
+                        Text(item['QualityInspection'] ?? 'N/A', style: const TextStyle(
+                            color: Colors.black)),
+                        Text(item['Blocked'] ?? 'N/A', style: const TextStyle(
                             color: Colors.black)),
                       ],
                     ),
@@ -669,7 +702,6 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
 
                   const SizedBox(height: 12.0),
 
-                  // Display Str Loc filter before buttons
                   if (_selectedParameter == 'Material' ||
                       _selectedParameter == 'Material Group' ||
                       _selectedParameter == 'Plant')
@@ -682,17 +714,20 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
 
                   Row(
                     children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _generatePdf,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green[700],
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                      Visibility(
+                        visible: _selectedParameter != 'Plant',
+                        child: Expanded(
+                          child: ElevatedButton(
+                            onPressed: _generatePdf,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green[700],
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
+                            child: const Text('Generate PDF'),
                           ),
-                          child: const Text('Generate PDF'),
                         ),
                       ),
                       const SizedBox(width: 16.0),
@@ -706,7 +741,7 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: const Text('Submit'),
+                          child: const Text('Generate Listing'),
                         ),
                       ),
                     ],
