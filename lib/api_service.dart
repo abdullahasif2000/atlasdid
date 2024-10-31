@@ -65,7 +65,7 @@ class ApiService {
       'Company': company,
     };
 
-    final uri = Uri.parse('$baseUrl/STR_Display_Stock_dev').replace(queryParameters: queryParams);
+    final uri = Uri.parse('$baseUrl/STR_Display_Stock').replace(queryParameters: queryParams);
 
     try {
       final response = await http.get(uri).timeout(timeout ?? defaultTimeout);

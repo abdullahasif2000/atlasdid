@@ -18,7 +18,7 @@ class PdfGenerator {
   static Future<void> generatePdfInIsolate(SendPort sendPort, List<Map<String, dynamic>> items) async {
     final pdf = pw.Document();
 
-    // Build PDF content
+    // Building Pdf content
     pdf.addPage(
       pw.Page(
         build: (pw.Context context) {
@@ -26,14 +26,14 @@ class PdfGenerator {
             children: [
               for (var item in items)
                 pw.Text("Material: ${item['Material']}, Desc: ${item['Desc']}, Plant: ${item['Plant']}"),
-              // Add more fields as required
+
             ],
           );
         },
       ),
     );
 
-    // Send PDF data back to the main thread
+    // Send Pdf data back the main thread
     final pdfData = await pdf.save();
     sendPort.send(pdfData);
   }
@@ -478,14 +478,19 @@ class _MaterialInputScreenState extends State<MaterialInputScreen> {
       final item = entry.value as Map<String, dynamic>;
 
       String getCellValue(String key) {
-        return item[key]
-            ?.toString()
-            .isNotEmpty == true ? item[key]! : 'N/A';
+        if (key == 'Material') {
+          final material = item[key]?.toString() ?? 'N/A';
+          return material.length > 10
+              ? material.substring(material.length - 10)
+              : material;
+        }
+        return item[key]?.toString().isNotEmpty == true ? item[key]! : 'N/A';
       }
+
 
       final cells = [
         DataCell(Center(child: Text((index + 1).toString()))),
-        DataCell(Text(getCellValue('Material'))),
+        DataCell(Center(child: Text(getCellValue('Material')))),
         DataCell(Center(child: Text(getCellValue('Desc')))),
         DataCell(Center(child: Text(getCellValue('Plant')))),
         DataCell(Center(child: Text(getCellValue('Strloc')))),
